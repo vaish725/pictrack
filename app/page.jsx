@@ -3,24 +3,42 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Baby } from "lucide-react";
-import { getChild } from "@/lib/storage";
+import { getChild, hasSeenOnboarding, markOnboardingSeen } from "@/lib/storage";
 import AddChildForm from "@/components/AddChildForm";
+import Onboarding from "@/components/Onboarding";
 
 export default function Home() {
   const router = useRouter();
   const [checkedStorage, setCheckedStorage] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
-    if (getChild()) {
+    // localStorage isn't readable during SSR, so this must run client-side on mount.
+    if (!hasSeenOnboarding()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setShowOnboarding(true);
+      setCheckedStorage(true);
+    } else if (getChild()) {
       router.replace("/timeline");
     } else {
-      // localStorage isn't readable during SSR, so this must run client-side on mount.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCheckedStorage(true);
     }
   }, [router]);
 
+  function handleOnboardingDone() {
+    markOnboardingSeen();
+    if (getChild()) {
+      router.replace("/timeline");
+    } else {
+      setShowOnboarding(false);
+    }
+  }
+
   if (!checkedStorage) return null;
+
+  if (showOnboarding) {
+    return <Onboarding onDone={handleOnboardingDone} />;
+  }
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-6 bg-zinc-50 px-6 py-16 text-center">
@@ -29,10 +47,6 @@ export default function Home() {
         Add your child
       </h1>
       <AddChildForm onAdded={() => router.push("/timeline")} />
-      <p className="max-w-sm text-xs text-zinc-400">
-        This app reminds and explains a public vaccine schedule. It is not
-        medical advice — always follow guidance from your health worker.
-      </p>
     </div>
   );
 }
