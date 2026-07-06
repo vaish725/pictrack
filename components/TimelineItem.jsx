@@ -50,7 +50,6 @@ export default function TimelineItem({
 
       {isSelected && (
         <div className="mt-4 flex flex-col items-start gap-3 border-t border-zinc-200 pt-4">
-          <p className="text-zinc-700">{item.audioText}</p>
           <AudioButton text={item.audioText} />
           {status !== "done" && (
             <button
